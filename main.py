@@ -2,11 +2,18 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from fpdf import FPDF
+import base64
+
+
+def create_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
 
 
 def main():
     # Load seaborn theme.
-    sns.set_theme(style="darkgrid")
+    sns.set_theme(style='darkgrid')
 
     # Read online JSON API and store into pandas DataFrame.
     df = pd.read_json('https://opendata.maryland.gov/resource/2tuk-rcgi.json')
@@ -54,8 +61,19 @@ def main():
     # Display figure on page.
     st.write(fig)
 
+    report_text = st.text_input('Report Text')
 
-    print(df)
+    export_as_pdf = st.button('Export Report')
+
+    if export_as_pdf:
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font('Arial', 'B', 16)
+        pdf.cell(40, 10, report_text)
+
+        html = create_download_link(pdf.output(dest='S').encode('latin-1'), 'test')
+
+        st.markdown(html, unsafe_allow_html=True)
 
 
 if __name__ == '__main__':
